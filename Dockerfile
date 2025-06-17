@@ -1,66 +1,58 @@
-# Use an image with a desktop environment (check arm64 support)
-FROM --platform=linux/arm64 kasmweb/desktop:1.16.0-rolling-daily
+# Use a minimal and ARM64-compatible Ubuntu base
+FROM --platform=linux/arm64 ubuntu:22.04
 
-# Set environment variables to avoid interactive prompts during build
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install necessary packages for Xvfb and pyvirtualdisplay
-USER root
-RUN apt-get update && \
-    apt-get install -y \
-        python3 \
-        python3-pip \
-        wget \
-        gnupg \
-        ca-certificates \
-        libx11-xcb1 \
-        libxcomposite1 \
-        libxdamage1 \
-        libxrandr2 \
-        libxss1 \
-        libxtst6 \
-        libnss3 \
-        libatk-bridge2.0-0 \
-        libgtk-3-0 \
-        x11-apps \
-        fonts-liberation \
-        libappindicator3-1 \
-        libu2f-udev \
-        libvulkan1 \
-        libdrm2 \
-        xdg-utils \
-        xvfb \
-        libasound2 \
-        libcurl4 \
-        libgbm1 \
-        && rm -rf /var/lib/apt/lists/*
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    wget \
+    gnupg \
+    ca-certificates \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libxss1 \
+    libxtst6 \
+    libnss3 \
+    libatk-bridge2.0-0 \
+    libgtk-3-0 \
+    x11-apps \
+    fonts-liberation \
+    libappindicator3-1 \
+    libu2f-udev \
+    libvulkan1 \
+    libdrm2 \
+    xdg-utils \
+    xvfb \
+    libasound2 \
+    libcurl4 \
+    libgbm1 \
+    chromium-browser \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install ARM64-compatible Chromium instead of amd64 Chrome
-RUN apt-get update && \
-    apt-get install -y chromium && \
-    ln -s /usr/bin/chromium /usr/bin/google-chrome && \
-    rm -rf /var/lib/apt/lists/*
+# Alias chromium as google-chrome if needed
+RUN ln -s /usr/bin/chromium-browser /usr/bin/google-chrome
 
-# Install Python dependencies including pyvirtualdisplay
+# Install Python tools
 RUN pip3 install --upgrade pip
 RUN pip3 install pyvirtualdisplay
 
-# Set up a working directory
+# Set up working directory
 WORKDIR /app
-
-# Copy application files
 COPY . .
 
 # Install Python dependencies
 RUN pip3 install -r requirements.txt
 RUN pip3 install -r server_requirements.txt
 
-# Expose the port for the FastAPI server
+# Expose FastAPI port
 EXPOSE 8000
 
-# Copy and set up startup script
+# Set up startup script
 COPY docker_startup.sh /
 RUN chmod +x /docker_startup.sh
 
-# Set the entrypoint directly to the startup script
 ENTRYPOINT ["/docker_startup.sh"]
