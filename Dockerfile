@@ -1,5 +1,5 @@
-# Use an image with a desktop environment
-FROM kasmweb/desktop:1.16.0-rolling-daily
+# Use an image with a desktop environment (check arm64 support)
+FROM --platform=linux/arm64 kasmweb/desktop:1.16.0-rolling-daily
 
 # Set environment variables to avoid interactive prompts during build
 ENV DEBIAN_FRONTEND=noninteractive
@@ -35,10 +35,11 @@ RUN apt-get update && \
         libgbm1 \
         && rm -rf /var/lib/apt/lists/*
 
-# Download and install specific version of Google Chrome
-RUN wget https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_126.0.6478.126-1_amd64.deb && \
-    dpkg -i google-chrome-stable_126.0.6478.126-1_amd64.deb && \
-    rm google-chrome-stable_126.0.6478.126-1_amd64.deb
+# Install ARM64-compatible Chromium instead of amd64 Chrome
+RUN apt-get update && \
+    apt-get install -y chromium && \
+    ln -s /usr/bin/chromium /usr/bin/google-chrome && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies including pyvirtualdisplay
 RUN pip3 install --upgrade pip
